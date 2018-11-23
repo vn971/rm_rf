@@ -1,11 +1,17 @@
-use std::path::Path;
-use std::io;
 use std::fs;
+use std::io;
+use std::path::Path;
 
-fn set_writeable(path: &Path) -> io::Result<()> {
+#[cfg(target_os = "windows")]
+fn fix_permissions(path: &Path) -> io::Result<()> {
 	let mut permissions = fs::metadata(&path)?.permissions();
 	permissions.set_readonly(false);
 	fs::set_permissions(&path, permissions)
+}
+
+#[cfg(not(target_os = "windows"))]
+fn fix_permissions(path: &Path) -> io::Result<()> {
+	Ok(())
 }
 
 
@@ -21,10 +27,10 @@ pub fn force_remove_all<P: AsRef<Path>>(path: P, ignore_not_existing: bool) -> i
 	if ignore_not_existing && !path.exists() {
 		Ok(())
 	} else if !path.is_dir() {
-		set_writeable(path)?;
+		fix_permissions(path)?;
 		fs::remove_file(path)
 	} else {
-		set_writeable(path)?;
+		fix_permissions(path)?;
 		if fs::remove_dir(path).is_ok() {
 			Ok(())
 		} else {
