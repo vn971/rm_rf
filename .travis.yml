@@ -6,6 +6,3 @@ rust:
   - nightly
 
 cache: cargo
-
-script:
-  - cargo check --verbose --all
