@@ -1,3 +1,5 @@
+extern crate stacker;
+
 use std::fs;
 use std::io;
 use std::path::Path;
@@ -10,7 +12,7 @@ fn fix_permissions(path: &Path) -> io::Result<()> {
 }
 
 #[cfg(not(target_os = "windows"))]
-fn fix_permissions(path: &Path) -> io::Result<()> {
+fn fix_permissions(_: &Path) -> io::Result<()> {
 	Ok(())
 }
 
@@ -21,7 +23,8 @@ fn fix_permissions(path: &Path) -> io::Result<()> {
 /// empty directories that lack read access on Linux,
 /// and will remove "read-only" files and directories on Windows.
 ///
-/// The current implementation may be not the most efficient one, but it should work.
+/// The current implementation may be suboptimal in terms
+/// of performance (e.g. number of syscalls made), but it should work.
 pub fn force_remove_all<P: AsRef<Path>>(path: P, ignore_not_existing: bool) -> io::Result<()> {
 	let path = path.as_ref();
 	if ignore_not_existing && !path.exists() {
@@ -37,7 +40,9 @@ pub fn force_remove_all<P: AsRef<Path>>(path: P, ignore_not_existing: bool) -> i
 			for child in fs::read_dir(&path)? {
 				let child = child?;
 				let path = child.path();
-				force_remove_all(&path, false)?;
+				stacker::maybe_grow(4 * 1024, 16 * 1024, ||
+					force_remove_all(&path, false),
+				)?;
 			}
 			fs::remove_dir(path)
 		}

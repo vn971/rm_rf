@@ -1,6 +1,6 @@
 [package]
 name = "rm_rf"
-version = "0.2.0"
+version = "0.2.1"
 description = "Force-remove file or directory"
 authors = ["Vasili Novikov <n1dr+cm3513git@ya.ru>"]
 license="MIT OR Apache-2.0 OR CC0-1.0"
@@ -11,3 +11,6 @@ repository = "https://github.com/vn971/rm_rf"
 
 [profile.release]
 lto = true
+
+[dependencies]
+stacker = "0.1"
