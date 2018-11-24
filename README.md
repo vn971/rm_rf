@@ -1,4 +1,4 @@
-## TimePlot  [![crates.io](https://img.shields.io/crates/v/rm_rf.svg)](https://crates.io/crates/rm_rf)
+## TimePlot  [![Build Status](https://travis-ci.org/vn971/rm_rf.svg?branch=master)](https://travis-ci.org/vn971/rm_rf)  [![crates.io](https://img.shields.io/crates/v/rm_rf.svg)](https://crates.io/crates/rm_rf)
 
 ## rm -rf
 
