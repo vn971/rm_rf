@@ -1,3 +1,5 @@
+## TimePlot  [![crates.io](https://img.shields.io/crates/v/rm_rf.svg)](https://crates.io/crates/rm_rf)
+
 ## rm -rf
 
 Force-removes a file/directory and all descendants.
@@ -9,16 +11,11 @@ and will remove "read-only" files and directories on Windows.
 
 ## Usage
 
-Cargo.toml:
-
-```toml
-rm_rf = "0.1.1"
-```
+Cargo.toml: add the [latest crate version](https://crates.io/crates/rm_rf).
 
 Rust:
 ```rust
 extern crate rm_rf;
-use rm_rf;
 
 fn main() {
     // Failure may still happen, in situations identical to where `rm -rf` would fail.
