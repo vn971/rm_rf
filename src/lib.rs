@@ -23,29 +23,27 @@ fn fix_permissions(_: &Path) -> io::Result<()> {
 /// empty directories that lack read access on Linux,
 /// and will remove "read-only" files and directories on Windows.
 ///
-/// The current implementation may be suboptimal in terms
+/// The current implementation is suboptimal in terms
 /// of performance (e.g. number of syscalls made), but it should work.
 pub fn force_remove_all<P: AsRef<Path>>(path: P, ignore_not_existing: bool) -> io::Result<()> {
 	let path = path.as_ref();
 	if ignore_not_existing && !path.exists() {
+		return Ok(())
+	}
+	fix_permissions(path)?;
+	if fs::remove_file(path).is_ok() {
 		Ok(())
-	} else if !path.is_dir() {
-		fix_permissions(path)?;
-		fs::remove_file(path)
+	} else if fs::remove_dir(path).is_ok() {
+		Ok(())
 	} else {
-		fix_permissions(path)?;
-		if fs::remove_dir(path).is_ok() {
-			Ok(())
-		} else {
-			for child in fs::read_dir(&path)? {
-				let child = child?;
-				let path = child.path();
-				stacker::maybe_grow(4 * 1024, 16 * 1024, ||
-					force_remove_all(&path, false),
-				)?;
-			}
-			fs::remove_dir(path)
+		for child in fs::read_dir(&path)? {
+			let child = child?;
+			let path = child.path();
+			stacker::maybe_grow(4 * 1024, 16 * 1024, ||
+				force_remove_all(&path, false),
+			)?;
 		}
+		fs::remove_dir(path)
 	}
 }
 

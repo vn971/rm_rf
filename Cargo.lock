@@ -15,7 +15,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
 name = "rm_rf"
-version = "0.2.1"
+version = "0.2.2"
 dependencies = [
  "stacker 0.1.3 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
