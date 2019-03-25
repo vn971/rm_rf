@@ -11,9 +11,6 @@ and will remove "read-only" files and directories on Windows.
 
 ## Usage
 
-Cargo.toml: add the [latest crate version](https://crates.io/crates/rm_rf).
-
-Rust:
 ```rust
 extern crate rm_rf;
 
