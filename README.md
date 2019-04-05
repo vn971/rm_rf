@@ -20,6 +20,7 @@ fn main() {
 }
 ```
 
+Note: to avoid overflowing stack for deeply nested directories, the library uses [stacker](https://crates.io/crates/stacker).
 
 ## Other
 

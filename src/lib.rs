@@ -40,6 +40,7 @@ pub fn force_remove_all<P: AsRef<Path>>(path: P, ignore_not_existing: bool) -> i
 			let child = child?;
 			let path = child.path();
 			stacker::maybe_grow(4 * 1024, 16 * 1024, ||
+				// don't die with stack overflow for deeply nested directories
 				force_remove_all(&path, false),
 			)?;
 		}
@@ -48,8 +49,8 @@ pub fn force_remove_all<P: AsRef<Path>>(path: P, ignore_not_existing: bool) -> i
 }
 
 
-#[cfg(not(target_os = "windows"))]  // windows may not have `rm`, `sh` and `chmod`
 #[cfg(test)]
+#[cfg(not(target_os = "windows"))]  // windows may not have `rm`, `sh` and `chmod`
 mod tests {
 	use std::process::Command;
 
