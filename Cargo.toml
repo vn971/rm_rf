@@ -1,6 +1,6 @@
 [package]
 name = "rm_rf"
-version = "0.2.3"
+version = "0.2.4"
 description = "Remove directory (--force)"
 authors = ["Vasili Novikov <n1dr+cm3513git@ya.ru>"]
 license="MIT OR Apache-2.0 OR CC0-1.0"
