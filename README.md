@@ -1,6 +1,4 @@
-## TimePlot  [![Build Status](https://travis-ci.org/vn971/rm_rf.svg?branch=master)](https://travis-ci.org/vn971/rm_rf)  [![crates.io](https://img.shields.io/crates/v/rm_rf.svg)](https://crates.io/crates/rm_rf)
-
-## rm -rf
+## rm -rf  [![Build Status](https://travis-ci.org/vn971/rm_rf.svg?branch=master)](https://travis-ci.org/vn971/rm_rf)  [![crates.io](https://img.shields.io/crates/v/rm_rf.svg)](https://crates.io/crates/rm_rf)
 
 Force-removes a file/directory and all descendants.
 
@@ -20,7 +18,7 @@ fn main() {
 }
 ```
 
-Note: to avoid overflowing stack for deeply nested directories, the library uses [stacker](https://crates.io/crates/stacker).
+Note: to avoid stack overflow for deeply nested directories, this library uses [stacker](https://crates.io/crates/stacker).
 
 ## Other
 
