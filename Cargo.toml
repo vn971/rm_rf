@@ -1,6 +1,6 @@
 [package]
 name = "rm_rf"
-version = "0.4.1"
+version = "0.5.0"
 description = "Force-remove a file/directory and all descendants"
 authors = ["Vasili Novikov <n1dr+cm3513git@ya.ru>"]
 license="MIT OR Apache-2.0 OR CC0-1.0"

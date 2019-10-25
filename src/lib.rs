@@ -13,7 +13,7 @@ use std::path::Path;
 /// In contrast to `std::fs::remove_dir_all`, it will remove
 /// empty directories that lack read access on Linux,
 /// and will remove "read-only" files and directories on Windows.
-pub fn force_remove_all<P: AsRef<Path>>(path: P) -> Result<()> {
+pub fn remove<P: AsRef<Path>>(path: P) -> Result<()> {
     let path = path.as_ref();
     let parent: &Path = path
         .parent()
@@ -32,7 +32,7 @@ pub fn force_remove_all<P: AsRef<Path>>(path: P) -> Result<()> {
     }
     let path = parent.join(last_segment);
     match path.symlink_metadata() {
-        Ok(_) => force_remove_all_fail_if_not_exist(&path).map_err(Error::IoError),
+        Ok(_) => recursive_remove(&path).map_err(Error::IoError),
         Err(err) => match err.kind() {
             ErrorKind::NotFound => Err(Error::NotFound),
             _ => Err(Error::IoError(err)),
@@ -40,7 +40,16 @@ pub fn force_remove_all<P: AsRef<Path>>(path: P) -> Result<()> {
     }
 }
 
-fn force_remove_all_fail_if_not_exist(path: &Path) -> io::Result<()> {
+/// same as `remove_all` above, but succeeds for non-existent target, akin to `rm -rf`.
+pub fn ensure_removed<P: AsRef<Path>>(path: P) -> Result<()> {
+    let remove_result = remove(path);
+    match remove_result {
+        Err(Error::NotFound) => Ok(()),
+        other => other,
+    }
+}
+
+fn recursive_remove(path: &Path) -> io::Result<()> {
     fix_permissions(path)?;
     let metadata = path.symlink_metadata()?;
     if !metadata.is_dir() {
@@ -53,7 +62,7 @@ fn force_remove_all_fail_if_not_exist(path: &Path) -> io::Result<()> {
             let path = child.path();
             stacker::maybe_grow(4 * 1024, 16 * 1024, ||
         // don't die with stack overflow for deeply nested directories
-        force_remove_all_fail_if_not_exist(&path))?;
+        recursive_remove(&path))?;
         }
         fs::remove_dir(path)
     }
@@ -74,8 +83,9 @@ fn fix_permissions(_: &Path) -> io::Result<()> {
 #[cfg(test)]
 #[cfg(not(target_os = "windows"))] // windows may not have `rm`, `sh` and `chmod`
 mod tests {
-    use super::Error;
-    use crate::force_remove_all;
+    use crate::ensure_removed;
+    use crate::error::Error;
+    use crate::remove;
     use std::ops::Not;
     use std::process::{Command, ExitStatus};
 
@@ -84,8 +94,8 @@ mod tests {
         sh_exec("mkdir -p playground1/playground2/playground3");
         std::env::set_current_dir("playground1/playground2").unwrap();
 
-        assert_invalid_target(force_remove_all("playground3/.."));
-        assert_invalid_target(force_remove_all(".."));
+        assert_invalid_target(remove("playground3/.."));
+        assert_invalid_target(remove(".."));
 
         std::env::set_current_dir("../..").unwrap();
         sh_exec("rm -rf playground1");
@@ -96,13 +106,13 @@ mod tests {
         sh_exec("mkdir -p playground1/playground2");
         std::env::set_current_dir("playground1").unwrap();
 
-        let remove_result = force_remove_all("playground2/.");
+        let remove_result = remove("playground2/.");
         assert!(
             remove_result.is_ok(),
             "in contrast to `rm -rf`, removing a path with last component being . is allowed.\
              The parent should still be computable though."
         );
-        assert_invalid_target(force_remove_all("."));
+        assert_invalid_target(remove("."));
 
         std::env::set_current_dir("..").unwrap();
         sh_exec("rm -rf playground1");
@@ -123,7 +133,7 @@ mod tests {
         sh_exec("mkdir dir");
         sh_exec("touch dir/real_file");
         sh_exec("ln -s dir/real_file dir/symlink");
-        assert!(force_remove_all("dir/symlink").is_ok());
+        assert!(remove("dir/symlink").is_ok());
         sh_exec("test -f dir/real_file");
         sh_exec("! test -e dir/symlink");
         sh_exec("rm -rf dir");
@@ -133,7 +143,7 @@ mod tests {
     fn remove_outer_symlink_test() {
         sh_exec("mkdir -p dir1/dir2");
         sh_exec("ln -s dir1/dir2 symlink");
-        assert!(force_remove_all("symlink").is_ok());
+        assert!(remove("symlink").is_ok());
         sh_exec("! test -e symlink");
         sh_exec("test -e dir1");
         sh_exec("rm -rf dir1");
@@ -141,7 +151,7 @@ mod tests {
 
     #[test]
     fn behavior_test() {
-        test_eq_behavior("ln -s unexistent target");
+        test_eq_behavior("");
         test_eq_behavior("touch target");
         test_eq_behavior("touch target; chmod 000 target");
         test_eq_behavior("touch target; chmod 777 target");
@@ -156,6 +166,10 @@ mod tests {
         test_eq_behavior("mkdir -p target/subdir; chmod 444 target");
         test_eq_behavior("mkdir -p target/subdir; chmod 222 target");
         test_eq_behavior("mkdir -p target/subdir; chmod 111 target");
+
+        test_eq_behavior("ln -s unexistent target");
+        test_eq_behavior("ln -s /abc/def target");
+        test_eq_behavior("ln -s / target");
     }
 
     fn test_eq_behavior(up: &str) {
@@ -220,6 +234,6 @@ mod tests {
     }
 
     fn rust_remove_success() -> bool {
-        super::force_remove_all("target").is_ok()
+        ensure_removed("target").is_ok()
     }
 }
