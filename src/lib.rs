@@ -1,17 +1,12 @@
-extern crate stacker;
+mod error;
 
+use crate::error::Error;
+use crate::error::Result;
+extern crate stacker;
 use std::fs;
 use std::io;
 use std::io::ErrorKind;
 use std::path::Path;
-
-type Result<T> = std::result::Result<T, RmRfError>;
-#[derive(Debug)]
-pub enum RmRfError {
-    IoError(std::io::Error),
-    InvalidTarget(String),
-    NotFound,
-}
 
 /// Force-removes a file/directory and all descendants.
 ///
@@ -22,30 +17,25 @@ pub fn force_remove_all<P: AsRef<Path>>(path: P) -> Result<()> {
     let path = path.as_ref();
     let parent: &Path = path
         .parent()
-        .ok_or_else(|| RmRfError::InvalidTarget("Invalid path, cannot get parent".to_string()))?;
+        .ok_or_else(|| Error::InvalidTarget("Invalid path, cannot get parent".to_string()))?;
     let last_segment = path.components().last().ok_or_else(|| {
-        RmRfError::InvalidTarget("Invalid path, cannot get last file path component".to_string())
+        Error::InvalidTarget("Invalid path, cannot get last file path component".to_string())
     })?;
-    eprintln!(
-        "last segment is {:?} and file_name is {:?}",
-        last_segment,
-        path.file_name()
-    );
     let last_segment_str = last_segment.as_os_str().to_str().ok_or_else(|| {
-        RmRfError::InvalidTarget("Invalid path, cannot convert last segment to string".to_string())
+        Error::InvalidTarget("Invalid path, cannot convert last segment to string".to_string())
     })?;
 
     if cfg!(not(target_os = "windows")) && (last_segment_str == "." || last_segment_str == "..") {
-        return Err(RmRfError::InvalidTarget(
+        return Err(Error::InvalidTarget(
             "Invalid path, last path segment cannot be \".\" or \"..\"".to_string(),
         ));
     }
     let path = parent.join(last_segment);
     match path.symlink_metadata() {
-        Ok(_) => force_remove_all_fail_if_not_exist(&path).map_err(RmRfError::IoError),
+        Ok(_) => force_remove_all_fail_if_not_exist(&path).map_err(Error::IoError),
         Err(err) => match err.kind() {
-            ErrorKind::NotFound => Err(RmRfError::NotFound),
-            _ => Err(RmRfError::IoError(err)),
+            ErrorKind::NotFound => Err(Error::NotFound),
+            _ => Err(Error::IoError(err)),
         },
     }
 }
@@ -84,7 +74,7 @@ fn fix_permissions(_: &Path) -> io::Result<()> {
 #[cfg(test)]
 #[cfg(not(target_os = "windows"))] // windows may not have `rm`, `sh` and `chmod`
 mod tests {
-    use super::RmRfError;
+    use super::Error;
     use crate::force_remove_all;
     use std::ops::Not;
     use std::process::{Command, ExitStatus};
@@ -118,9 +108,9 @@ mod tests {
         sh_exec("rm -rf playground1");
     }
 
-    fn assert_invalid_target(remove_result: Result<(), RmRfError>) {
+    fn assert_invalid_target(remove_result: Result<(), Error>) {
         match remove_result {
-            Err(RmRfError::InvalidTarget(_)) => (),
+            Err(Error::InvalidTarget(_)) => (),
             _ => panic!(
                 "removal target '..' should be considered invalid, actual result is: {:?}",
                 remove_result
@@ -203,10 +193,6 @@ mod tests {
         up();
         let rust_success = rust_remove_success();
         clean();
-        eprintln!(
-            "Running test {}. `rm -rf` success: {}, `force_remove` success: {}",
-            test_name, rm_success, rust_success
-        );
         assert_eq!(
             rm_success, rust_success,
             "`rm -rf` and `force_remove` behaved differently for test: {}",
