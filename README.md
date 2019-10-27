@@ -10,7 +10,8 @@ and will remove "read-only" files and directories on Windows.
 ## Usage
 
 ```rust
-rm_rf::force_remove_all("target")?;
+rm_rf::remove("target")?; // remove, fail if target doesn't exists
+rm_rf::ensure_removed("target")?; // remove, but ignore if target doesn't exist
 ```
 
 Note: to avoid stack overflow for deeply nested directories, this library uses [stacker](https://crates.io/crates/stacker).
