@@ -91,22 +91,22 @@ mod tests {
 
     #[test]
     fn remove_parent_directory_test() {
-        sh_exec("mkdir -p playground1/playground2/playground3");
-        std::env::set_current_dir("playground1/playground2").unwrap();
+        sh_exec("mkdir -p par1/par2/par3");
+        std::env::set_current_dir("par1/par2").unwrap();
 
-        assert_invalid_target(remove("playground3/.."));
+        assert_invalid_target(remove("par3/.."));
         assert_invalid_target(remove(".."));
 
         std::env::set_current_dir("../..").unwrap();
-        sh_exec("rm -rf playground1");
+        sh_exec("rm -rf par1");
     }
 
     #[test]
     fn remove_current_directory_test() {
-        sh_exec("mkdir -p playground1/playground2");
-        std::env::set_current_dir("playground1").unwrap();
+        sh_exec("mkdir -p cur1/cur2");
+        std::env::set_current_dir("cur1").unwrap();
 
-        let remove_result = remove("playground2/.");
+        let remove_result = remove("cur2/.");
         assert!(
             remove_result.is_ok(),
             "in contrast to `rm -rf`, removing a path with last component being . is allowed.\
@@ -115,7 +115,7 @@ mod tests {
         assert_invalid_target(remove("."));
 
         std::env::set_current_dir("..").unwrap();
-        sh_exec("rm -rf playground1");
+        sh_exec("rm -rf cur1");
     }
 
     fn assert_invalid_target(remove_result: Result<(), Error>) {
@@ -130,13 +130,13 @@ mod tests {
 
     #[test]
     fn remove_inner_symlink_test() {
-        sh_exec("mkdir dir");
-        sh_exec("touch dir/real_file");
-        sh_exec("ln -s dir/real_file dir/symlink");
-        assert!(remove("dir/symlink").is_ok());
-        sh_exec("test -f dir/real_file");
-        sh_exec("! test -e dir/symlink");
-        sh_exec("rm -rf dir");
+        sh_exec("mkdir inner");
+        sh_exec("touch inner/real_file");
+        sh_exec("ln -s inner/real_file inner/symlink");
+        assert!(remove("inner/symlink").is_ok());
+        sh_exec("test -f inner/real_file");
+        sh_exec("! test -e inner/symlink");
+        sh_exec("rm -rf inner");
     }
 
     #[test]
