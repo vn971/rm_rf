@@ -88,34 +88,42 @@ mod tests {
     use crate::remove;
     use std::ops::Not;
     use std::process::{Command, ExitStatus};
+    use std::sync::Once;
+
+    static INITIALIZATION: Once = Once::new();
+
+    fn initialize() {
+        INITIALIZATION.call_once(|| {
+            sh_exec("mkdir -p target/testdir");
+            std::env::set_current_dir("target/testdir").unwrap();
+        });
+    }
 
     #[test]
     fn remove_parent_directory_test() {
-        sh_exec("mkdir -p par1/par2/par3");
-        std::env::set_current_dir("par1/par2").unwrap();
+        initialize();
+        sh_exec("mkdir -p parentdirtest");
 
-        assert_invalid_target(remove("par3/.."));
+        assert_invalid_target(remove("parentdirtest/.."));
         assert_invalid_target(remove(".."));
 
-        std::env::set_current_dir("../..").unwrap();
-        sh_exec("rm -rf par1");
+        sh_exec("rmdir parentdirtest");
     }
 
     #[test]
     fn remove_current_directory_test() {
-        sh_exec("mkdir -p cur1/cur2");
-        std::env::set_current_dir("cur1").unwrap();
+        initialize();
+        sh_exec("mkdir -p dotdir");
 
-        let remove_result = remove("cur2/.");
+        let remove_result = remove("dotdir/.");
         assert!(
             remove_result.is_ok(),
             "in contrast to `rm -rf`, removing a path with last component being . is allowed.\
              The parent should still be computable though."
         );
-        assert_invalid_target(remove("."));
+        assert_invalid_target(remove(".")); // removing "." is not allowed, however.
 
-        std::env::set_current_dir("..").unwrap();
-        sh_exec("rm -rf cur1");
+        sh_exec("rm -rf dotdir");
     }
 
     fn assert_invalid_target(remove_result: Result<(), Error>) {
@@ -130,6 +138,7 @@ mod tests {
 
     #[test]
     fn remove_inner_symlink_test() {
+        initialize();
         sh_exec("mkdir inner");
         sh_exec("touch inner/real_file");
         sh_exec("ln -s inner/real_file inner/symlink");
@@ -141,6 +150,7 @@ mod tests {
 
     #[test]
     fn remove_outer_symlink_test() {
+        initialize();
         sh_exec("mkdir -p dir1/dir2");
         sh_exec("ln -s dir1/dir2 symlink");
         assert!(remove("symlink").is_ok());
@@ -151,6 +161,7 @@ mod tests {
 
     #[test]
     fn behavior_test() {
+        initialize();
         test_eq_behavior("");
         test_eq_behavior("touch target");
         test_eq_behavior("touch target; chmod 000 target");
@@ -183,7 +194,7 @@ mod tests {
 
     fn sh_exec(script: &str) {
         if sh_exec_status(script).success().not() {
-            panic!("Failed to execute `{}`", script)
+            panic!("Non-zero exit status of `{}`", script)
         }
     }
 
@@ -199,7 +210,6 @@ mod tests {
     where
         F: Fn() -> (),
     {
-        std::env::set_current_dir("target").unwrap();
         clean();
         up();
         let rm_success = rm_rf_success();
@@ -212,7 +222,6 @@ mod tests {
             "`rm -rf` and `force_remove` behaved differently for test: {}",
             test_name
         );
-        std::env::set_current_dir("..").unwrap();
     }
 
     fn clean() {
