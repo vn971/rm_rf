@@ -40,13 +40,14 @@ pub fn remove<P: AsRef<Path>>(path: P) -> Result<()> {
     }
 }
 
-/// same as `remove_all` above, but succeeds for non-existent target, akin to `rm -rf`.
+/// same as `remove` above, but succeeds for non-existent target, similar to `rm -rf`.
 pub fn ensure_removed<P: AsRef<Path>>(path: P) -> Result<()> {
-    let remove_result = remove(path);
-    match remove_result {
-        Err(Error::NotFound) => Ok(()),
-        other => other,
-    }
+    if let Err(err) = path.as_ref().symlink_metadata() {
+        if err.kind() == ErrorKind::NotFound {
+            return Ok(())
+        }
+    };
+    remove(path)
 }
 
 fn recursive_remove(path: &Path) -> io::Result<()> {
