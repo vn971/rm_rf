@@ -44,7 +44,7 @@ pub fn remove<P: AsRef<Path>>(path: P) -> Result<()> {
 pub fn ensure_removed<P: AsRef<Path>>(path: P) -> Result<()> {
     if let Err(err) = path.as_ref().symlink_metadata() {
         if err.kind() == ErrorKind::NotFound {
-            return Ok(())
+            return Ok(());
         }
     };
     remove(path)
