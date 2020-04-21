@@ -2,7 +2,7 @@ mod error;
 
 use crate::error::Error;
 use crate::error::Result;
-extern crate stacker;
+use stacker;
 use std::fs;
 use std::io;
 use std::io::ErrorKind;

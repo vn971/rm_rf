@@ -29,9 +29,6 @@ impl std::error::Error for Error {
     }
 }
 
-// Implement the conversion from `ParseIntError` to `DoubleError`.
-// This will be automatically called by `?` if a `ParseIntError`
-// needs to be converted into a `DoubleError`.
 impl From<std::io::Error> for Error {
     fn from(err: std::io::Error) -> Error {
         Error::IoError(err)
