@@ -1,7 +1,7 @@
 mod error;
 
-use crate::error::Error;
-use crate::error::Result;
+pub use crate::error::Error;
+pub use crate::error::Result;
 use stacker;
 use std::fs;
 use std::io;
