@@ -2,7 +2,6 @@ mod error;
 
 pub use crate::error::Error;
 pub use crate::error::Result;
-use stacker;
 use std::fs;
 use std::io;
 use std::io::ErrorKind;
@@ -209,7 +208,7 @@ mod tests {
 
     fn test_eq_behavior_fn<F>(up: &F, test_name: &str)
     where
-        F: Fn() -> (),
+        F: Fn(),
     {
         clean();
         up();
