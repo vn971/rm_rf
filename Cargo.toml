@@ -14,4 +14,4 @@ repository = "https://github.com/vn971/rm_rf"
 lto = true
 
 [dependencies]
-stacker = "0.1.14"
+stacker = "0.1.15"
