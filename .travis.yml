@@ -1,8 +1,0 @@
-sudo: false
-
-language: rust
-rust:
-  - stable
-  - nightly
-
-cache: cargo
